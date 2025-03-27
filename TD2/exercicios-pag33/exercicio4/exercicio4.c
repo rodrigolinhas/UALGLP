@@ -1,13 +1,14 @@
 #include <stdio.h>
 
 int* retorna_ponteiro() {
-    int x = 10; // Variável local (alocada na stack)
-    return &x;  // Retorna endereço de uma variável que será destruída
+    int p = 10; // Variável local (alocada na stack)
+    return &p; // Retorna o endereço da variável local
 }
 
 int main(void) {
-    int* y = retorna_ponteiro(); // y é um "dangling pointer"
-    printf("Endereço retornado: %p\n", (void*)y); // Imprime o endereço (ainda válido)
-    printf("Valor de y: %d\n", *y); // Comportamento indefinido: valor corrupto ou crash
+    int* p = retorna_ponteiro();            // p é um "dangling pointer"
+    printf("Endereço retornado: %p\n", p); 
+    printf("Valor de p: %d\n", *p);       // Comportamento indefinido: valor corrupto ou crash
+                                         // A variável local p foi desalocada da stack
     return 0;
 }

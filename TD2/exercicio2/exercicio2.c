@@ -8,38 +8,37 @@
 
 #define MAX_COMMAND_LEN 30
 
-// Estrutura para mapar o nome os comandos com funções
+// Estrutura para mapear os comandos com funções
 typedef struct {
-  char * name;
-  void( * func)(Stack * , char * ); // repare na assinatura!
-}
-Command;
+    char *name;
+    void (*func)(Stack *, char *); // repare na assinatura!
+} Command;
 
-// protótipo das funções
-void handle_push(Stack * s, char * arg);
-void handle_pop(Stack * s);
-void handle_top(Stack * s);
+// Protótipos das funções
+void handle_push(Stack *s, char *arg);
+void handle_pop(Stack *s);
+void handle_top(Stack *s);
 
 // Implementação das funções
-void handle_push(Stack * s, char * arg) {
+void handle_push(Stack *s, char *arg) {
   // se nenhum argumento foi extraido, assinalar o erro
   if (arg == NULL) {
-    printf("Error: No value provided for push.\n");
-    return;
+      printf("Error: No value provided for push.\n");
+      return;
   }
-
+  
   // transformar o argumento de uma string para um inteiro
   int value = atoi(arg);
   push(s, value);
 }
 
-void handle_pop(Stack * s) {
+void handle_pop(Stack *s) {
   // nada por preprocessar, chamamos directamente
   // a função associada
   pop(s);
 }
 
-void handle_top(Stack * s) {
+void handle_top(Stack *s) {
   // nada por preprocessar, chamamos directamente
   // a função associada
   top(s);
@@ -47,12 +46,12 @@ void handle_top(Stack * s) {
 
 // vetor que mapeia comandos a funções concretas
 Command commands[] = {
-  {
-    "push",
-    handle_push
-  },
-  // COMPLETAR!
+  {"push", handle_push},
+  {"pop", handle_pop},
+  {"top", handle_top},
+  // Nenhum comando adicional necessário
 };
+
 
 // uma macro para assinalar o número de elementos no vector 
 // commands: tamanho do vetor na sua globalidade dividida pelo tamanho
@@ -80,7 +79,7 @@ int main(void) {
     for (int i = 0; i < COMMAND_COUNT; i++) {
       if (strcmp(command, commands[i].name) == 0) {
         // Encontrei! O comando está na lista!
-        // COMPLETAR!
+        commands[i].func(&stack, arg); // Executa a função
         // ---> executar a respectiva função com o rspectivo
         //argumento (args)
         // ....

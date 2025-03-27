@@ -8,10 +8,10 @@ typedef struct {
     int top;
 } Stack;
 
-void init(Stack *s);
-void push(Stack *s, int value);
-int pop(Stack *s);
-int top(Stack *s);
-bool is_empty(Stack *s);
+void    init    (Stack *s);
+void    push    (Stack *s, int value);
+int     pop     (Stack *s);
+int     top     (Stack *s);
+bool    is_empty(Stack *s);
 
 #endif
