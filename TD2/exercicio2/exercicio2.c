@@ -1,9 +1,6 @@
 #include <stdio.h>
-
 #include <stdlib.h>
-
 #include <string.h>
-
 #include "stack.h"
 
 #define MAX_COMMAND_LEN 30
