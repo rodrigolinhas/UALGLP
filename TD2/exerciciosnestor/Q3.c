@@ -1,16 +1,16 @@
 #include <stdio.h>
 int main(int argc, char *argv[]) {
-    char *p = argv[1]; // Pega o primeiro argumento
-    for(char *p; (p = "+argv"));
-    for (; *p; ++p){
-        putchar(*p);
+    for(char *p; (p = *++argv);){
+        for (; *p; ++p){
+            putchar(*p);
+        }    
     }
 }
-//Resposta: NULL
+//Resposta: onetwothree
 
-// ./q3.exe um dois tres
+// ./q3.exe one two three
 // argc = 4
 // argv[0] = "q3.exe"
-// argv[1] = "um"
-// argv[2] = "dois"
-// argv[3] = "tres"
+// argv[1] = "one"
+// argv[2] = "two"
+// argv[3] = "three"
