@@ -2,6 +2,11 @@
 #include <string.h>
 #include <string.h>
 
+// ler um ficheiro
+// excluir caracteres especiais
+// ordenar alfabeticamente
+// excluir repetidos e agrupa-los (tipo 3 mesas)
+// ordenar numericamente
 // Necessario 2 sorts
 /**
  * oredenação alfabetica    : insertion sort
