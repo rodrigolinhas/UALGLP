@@ -5,7 +5,7 @@
 // ler um ficheiro
 // excluir caracteres especiais
 // ordenar alfabeticamente
-// excluir repetidos e agrupa-los (tipo 3 mesas)
+// excluir repetidos e agrupa-los (tipo 3 me sas)
 // ordenar numericamente
 // Necessario 2 sorts
 /**
