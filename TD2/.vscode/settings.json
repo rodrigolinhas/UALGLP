@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "cstring": "c"
+        "cstring": "c",
+        "string_view": "cpp",
+        "string.h": "c",
+        "plg.h": "c"
     }
 }
