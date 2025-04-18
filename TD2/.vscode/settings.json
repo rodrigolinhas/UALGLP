@@ -3,6 +3,7 @@
         "cstring": "c",
         "string_view": "cpp",
         "string.h": "c",
-        "plg.h": "c"
+        "plg.h": "c",
+        "stdio.h": "c"
     }
 }

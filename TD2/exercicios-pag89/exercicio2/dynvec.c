@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 #include "dynvec.h"
 
 #ifndef DYNVEC_INIT_CAPACITY
@@ -180,4 +181,147 @@ static void quicksort_rec(dynvec *v, int (*cmp)(const void*, const void*), size_
     }
 }
 
-void quicksort_dynvec(dynvec *v, int (*cmp)(const void*, const void*))  {quicksort_rec(v, cmp, 0, v->length - 1);}
+void quicksort_dynvec(dynvec *v, int (*cmp)(const void*, const void*)) {
+    if (v->length < 2) return;
+    quicksort_rec(v, cmp, 0, v->length - 1);
+}
+
+//-----------------------------------------------------------
+// Função auxiliar para verificar se o vetor está ordenado
+//-----------------------------------------------------------
+bool dynvec_is_sorted(dynvec *v, int (*cmp)(const void *, const void *)) {
+    for (size_t i = 1; i < v->length; i++) {
+        if (cmp(dynvec_get(v, i-1), dynvec_get(v, i)) > 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+//-----------------------------------------------------------
+// Implementação das variantes do Quicksort
+//-----------------------------------------------------------
+
+//================= LOMUTO PARTITION ========================
+static size_t partition_lomuto(dynvec *v, int (*cmp)(const void*, const void*), 
+                              size_t low, size_t high) {
+    void *pivot = dynvec_get(v, high);
+    size_t i = low;
+    
+    for (size_t j = low; j < high; j++) {
+        if (cmp(dynvec_get(v, j), pivot) < 0) {
+            dynvec_swap(v, i, j);
+            i++;
+        }
+    }
+    dynvec_swap(v, i, high);
+    return i;
+}
+
+static void qs_lomuto(dynvec *v, int (*cmp)(const void*, const void*), 
+                     size_t low, size_t high) {
+    if (low < high) {
+        size_t p = partition_lomuto(v, cmp, low, high);
+        if (p > 0) qs_lomuto(v, cmp, low, p-1);
+        qs_lomuto(v, cmp, p+1, high);
+    }
+}
+
+void quicksort_lomuto(dynvec *v, int (*cmp)(const void *, const void *)) {
+    if (v->length < 2 || dynvec_is_sorted(v, cmp)) return;
+    qs_lomuto(v, cmp, 0, v->length-1);
+}
+
+//============= MEDIAN OF THREE PARTITION ===================
+static void median_of_three(dynvec *v, int (*cmp)(const void*, const void*),
+                           size_t a, size_t b, size_t c) {
+    void *x = dynvec_get(v, a);
+    void *y = dynvec_get(v, b);
+    void *z = dynvec_get(v, c);
+    
+    if (cmp(x, y) > 0) dynvec_swap(v, a, b);
+    if (cmp(y, z) > 0) dynvec_swap(v, b, c);
+    if (cmp(x, y) > 0) dynvec_swap(v, a, b);
+}
+
+static size_t partition_mot(dynvec *v, int (*cmp)(const void*, const void*),
+                           size_t low, size_t high) {
+    size_t mid = low + (high - low)/2;
+    median_of_three(v, cmp, low, mid, high);
+    return partition_lomuto(v, cmp, low, high);
+}
+
+static void qs_mot(dynvec *v, int (*cmp)(const void*, const void*),
+                  size_t low, size_t high) {
+    if (high > low) {
+        size_t p = partition_mot(v, cmp, low, high);
+        if (p > 0) qs_mot(v, cmp, low, p-1);
+        qs_mot(v, cmp, p+1, high);
+    }
+}
+
+void quicksort_median_of_three(dynvec *v, int (*cmp)(const void *, const void *)) {
+    if (v->length < 2 || dynvec_is_sorted(v, cmp)) return;
+    qs_mot(v, cmp, 0, v->length-1);
+}
+
+//================= RANDOMIZED PARTITION ====================
+static size_t partition_random(dynvec *v, int (*cmp)(const void*, const void*),
+                              size_t low, size_t high) {
+    size_t random_idx = low + rand() % (high - low + 1);
+    dynvec_swap(v, random_idx, high);
+    return partition_lomuto(v, cmp, low, high);
+}
+
+static void qs_random(dynvec *v, int (*cmp)(const void*, const void*),
+                     size_t low, size_t high) {
+    if (low < high) {
+        size_t p = partition_random(v, cmp, low, high);
+        if (p > 0) qs_random(v, cmp, low, p-1);
+        qs_random(v, cmp, p+1, high);
+    }
+}
+
+void quicksort_randomized(dynvec *v, int (*cmp)(const void *, const void *)) {
+    if (v->length < 2 || dynvec_is_sorted(v, cmp)) return;
+    srand(time(NULL));
+    qs_random(v, cmp, 0, v->length-1);
+}
+
+//================= THREE WAY PARTITION =====================
+static void partition_three_way(dynvec *v, int (*cmp)(const void*, const void*),
+                               size_t low, size_t high, size_t *lt, size_t *gt) {
+    void *pivot = dynvec_get(v, low);
+    *lt = low;
+    *gt = high;
+    size_t i = low + 1;
+
+    while (i <= *gt) {
+        int res = cmp(dynvec_get(v, i), pivot);
+        if (res < 0) {
+            dynvec_swap(v, (*lt)++, i++);
+        } else if (res > 0) {
+            dynvec_swap(v, i, (*gt)--);
+        } else {
+            i++;
+        }
+    }
+}
+
+static void qs_three_way(dynvec *v, int (*cmp)(const void*, const void*),
+                        size_t low, size_t high) {
+    if (high <= low) return;
+
+    size_t lt, gt;
+    partition_three_way(v, cmp, low, high, &lt, &gt);
+
+    if (lt > low)
+        qs_three_way(v, cmp, low, lt - 1);
+    if (gt < high)
+        qs_three_way(v, cmp, gt + 1, high);
+}
+
+void quicksort_three_way(dynvec *v, int (*cmp)(const void *, const void *)) {
+    if (v->length < 2) return;
+    qs_three_way(v, cmp, 0, v->length - 1);
+}
