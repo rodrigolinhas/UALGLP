@@ -203,8 +203,7 @@ bool dynvec_is_sorted(dynvec *v, int (*cmp)(const void *, const void *)) {
 //-----------------------------------------------------------
 
 //================= LOMUTO PARTITION ========================
-static size_t partition_lomuto(dynvec *v, int (*cmp)(const void*, const void*), 
-                              size_t low, size_t high) {
+static size_t partition_lomuto(dynvec *v, int (*cmp)(const void*, const void*), size_t low, size_t high) {
     void *pivot = dynvec_get(v, high);
     size_t i = low;
     
@@ -218,8 +217,7 @@ static size_t partition_lomuto(dynvec *v, int (*cmp)(const void*, const void*),
     return i;
 }
 
-static void qs_lomuto(dynvec *v, int (*cmp)(const void*, const void*), 
-                     size_t low, size_t high) {
+static void qs_lomuto(dynvec *v, int (*cmp)(const void*, const void*), size_t low, size_t high) {
     if (low < high) {
         size_t p = partition_lomuto(v, cmp, low, high);
         if (p > 0) qs_lomuto(v, cmp, low, p-1);
@@ -233,8 +231,7 @@ void quicksort_lomuto(dynvec *v, int (*cmp)(const void *, const void *)) {
 }
 
 //============= MEDIAN OF THREE PARTITION ===================
-static void median_of_three(dynvec *v, int (*cmp)(const void*, const void*),
-                           size_t a, size_t b, size_t c) {
+static void median_of_three(dynvec *v, int (*cmp)(const void*, const void*), size_t a, size_t b, size_t c) {
     void *x = dynvec_get(v, a);
     void *y = dynvec_get(v, b);
     void *z = dynvec_get(v, c);
@@ -244,15 +241,13 @@ static void median_of_three(dynvec *v, int (*cmp)(const void*, const void*),
     if (cmp(x, y) > 0) dynvec_swap(v, a, b);
 }
 
-static size_t partition_mot(dynvec *v, int (*cmp)(const void*, const void*),
-                           size_t low, size_t high) {
+static size_t partition_mot(dynvec *v, int (*cmp)(const void*, const void*), size_t low, size_t high) {
     size_t mid = low + (high - low)/2;
     median_of_three(v, cmp, low, mid, high);
     return partition_lomuto(v, cmp, low, high);
 }
 
-static void qs_mot(dynvec *v, int (*cmp)(const void*, const void*),
-                  size_t low, size_t high) {
+static void qs_mot(dynvec *v, int (*cmp)(const void*, const void*), size_t low, size_t high) {
     if (high > low) {
         size_t p = partition_mot(v, cmp, low, high);
         if (p > 0) qs_mot(v, cmp, low, p-1);
@@ -266,15 +261,13 @@ void quicksort_median_of_three(dynvec *v, int (*cmp)(const void *, const void *)
 }
 
 //================= RANDOMIZED PARTITION ====================
-static size_t partition_random(dynvec *v, int (*cmp)(const void*, const void*),
-                              size_t low, size_t high) {
+static size_t partition_random(dynvec *v, int (*cmp)(const void*, const void*), size_t low, size_t high) {
     size_t random_idx = low + rand() % (high - low + 1);
     dynvec_swap(v, random_idx, high);
     return partition_lomuto(v, cmp, low, high);
 }
 
-static void qs_random(dynvec *v, int (*cmp)(const void*, const void*),
-                     size_t low, size_t high) {
+static void qs_random(dynvec *v, int (*cmp)(const void*, const void*), size_t low, size_t high) {
     if (low < high) {
         size_t p = partition_random(v, cmp, low, high);
         if (p > 0) qs_random(v, cmp, low, p-1);
@@ -289,8 +282,11 @@ void quicksort_randomized(dynvec *v, int (*cmp)(const void *, const void *)) {
 }
 
 //================= THREE WAY PARTITION =====================
-static void partition_three_way(dynvec *v, int (*cmp)(const void*, const void*),
-                               size_t low, size_t high, size_t *lt, size_t *gt) {
+static void partition_three_way(dynvec *v, int (*cmp)(const void*, const void*), size_t low, size_t high, size_t *lt, size_t *gt) {
+    // Escolhe um pivô aleatório e troca com o elemento em 'low'
+    size_t random_pivot = low + rand() % (high - low + 1);
+    dynvec_swap(v, low, random_pivot); 
+    
     void *pivot = dynvec_get(v, low);
     *lt = low;
     *gt = high;
@@ -308,8 +304,7 @@ static void partition_three_way(dynvec *v, int (*cmp)(const void*, const void*),
     }
 }
 
-static void qs_three_way(dynvec *v, int (*cmp)(const void*, const void*),
-                        size_t low, size_t high) {
+static void qs_three_way(dynvec *v, int (*cmp)(const void*, const void*), size_t low, size_t high) {
     if (high <= low) return;
 
     size_t lt, gt;

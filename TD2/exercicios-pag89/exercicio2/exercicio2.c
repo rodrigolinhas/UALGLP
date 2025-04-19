@@ -14,8 +14,7 @@ int cmp_int(const void* a, const void* b) {
 void print_elem(void *elem) {printf("%d ", *(int*)elem);}
 
 // Test harness for a given quicksort variant
-void test_qsort(const char *name, void (*sort_func)(dynvec*, int (*)(const void*, const void*)),
-                    int data[], size_t n) {
+void test_qsort(const char *name, void (*sort_func)(dynvec*, int (*)(const void*, const void*)), int data[], size_t n) {
     dynvec *v = dynvec_create(sizeof(int));
     for (size_t i = 0; i < n; i++) {
         dynvec_push(v, &data[i]);
