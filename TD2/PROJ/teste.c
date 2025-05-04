@@ -78,6 +78,7 @@ void dynvec_set(dynvec *v, size_t index, const void *elem) {
 // Retorna o número de elementos
 size_t dynvec_length(const dynvec *v)   {return v->length;}
 
+// Retorna os elementos do vetor
 void dynvec_map(dynvec *v, void (*processo)(void *)) {
     if (!v || !processo) return;
     for (size_t i = 0; i < v->length; i++) {
@@ -181,72 +182,6 @@ void insertion_sort_dynvec(dynvec *v, int (*cmp)(const void*, const void*)) {
     }
 }
 
-static void merge(dynvec *v, int (*cmp)(const void*, const void*), 
-                 size_t l, size_t m, size_t r, void *tmp) {
-    size_t i = l, j = m, k = 0;
-    
-    while (i < m && j < r) {
-        if (cmp(dynvec_get(v, i), dynvec_get(v, j)) <= 0) {
-            memcpy((char*)tmp + (k++ * v->elem_size), dynvec_get(v, i++), v->elem_size);
-        } else {
-            memcpy((char*)tmp + (k++ * v->elem_size), dynvec_get(v, j++), v->elem_size);
-        }
-    }
-    
-    while (i < m) memcpy((char*)tmp + (k++ * v->elem_size), dynvec_get(v, i++), v->elem_size);
-    while (j < r) memcpy((char*)tmp + (k++ * v->elem_size), dynvec_get(v, j++), v->elem_size);
-    
-    memcpy((char*)v->data + (l * v->elem_size), tmp, k * v->elem_size);
-}
-
-static void mergesort_rec(dynvec *v, int (*cmp)(const void*, const void*), 
-                         size_t l, size_t r, void *tmp) {
-    if (r - l <= 1) return;
-    
-    size_t m = l + (r - l) / 2;
-    mergesort_rec(v, cmp, l, m, tmp);
-    mergesort_rec(v, cmp, m, r, tmp);
-    merge(v, cmp, l, m, r, tmp);
-}
-
-void mergesort_dynvec(dynvec *v, int (*cmp)(const void*, const void*)) {
-    void *tmp = malloc(v->length * v->elem_size);
-    mergesort_rec(v, cmp, 0, v->length, tmp);
-    free(tmp);
-}
-
-static void heapify(dynvec *v, int (*cmp)(const void*, const void*), size_t n, size_t i) {
-    size_t largest = i;
-    size_t left = 2 * i + 1;
-    size_t right = 2 * i + 2;
-
-    if (left < n && cmp(dynvec_get(v, left), dynvec_get(v, largest)) > 0) {
-        largest = left;
-    }
-
-    if (right < n && cmp(dynvec_get(v, right), dynvec_get(v, largest)) > 0) {
-        largest = right;
-    }
-
-    if (largest != i) {
-        dynvec_swap(v, i, largest);
-        heapify(v, cmp, n, largest);
-    }
-}
-
-void heapsort_dynvec(dynvec *v, int (*cmp)(const void*, const void*)) {
-    // Build heap
-    for (int i = v->length / 2 - 1; i >= 0; i--) {
-        heapify(v, cmp, v->length, i);
-    }
-
-    // Extract elements
-    for (int i = v->length - 1; i > 0; i--) {
-        dynvec_swap(v, 0, i);
-        heapify(v, cmp, i, 0);
-    }
-}
-
 static int partition(dynvec *v, int (*cmp)(const void*, const void*), int low, int high) {
     if (low > high || high >= (int)v->length) return -1;
     void *pivot = dynvec_get(v, high);
@@ -284,8 +219,8 @@ bool dynvec_is_sorted(dynvec *v, int (*cmp)(const void *, const void *)) {
     }
     return true;
 }
-
-typedef struct {
+//---------------------------------------------------------------------TD2---------------------------------------------------------------------------------------
+typedef struct word_count {
     char *word;
     int count;
 } WordCount;
@@ -304,38 +239,38 @@ int compare_counts_desc(const void *a, const void *b) {
     return strcmp(wc_a->word, wc_b->word); // critério secundário
 }
 
-
 int main(void) {
     int N;
     char buffer[1024];
 
-    // Read the number of top words
+    // Ler número de palavras do ranking
     if (fgets(buffer, sizeof(buffer), stdin) == NULL || sscanf(buffer, "%d", &N) != 1) {
-        fprintf(stderr, "Erro na leitura do número de palavras\n");
+        errno = ENOMEM;
+        #ifdef DEBUG_ON
+        perror("Erro ao ler o número de palavras");
+        #endif
         return 1;
     }
   
-    dynvec *words = dynvec_create(sizeof(WordCount));   
-    // Add apostrophe (') and hyphen (-) to delimiters
-    const char *delimiters = " \t\n\r.,;:!?()\"'-"; // Corrected delimiters
+    dynvec *words = dynvec_create(sizeof(WordCount));
+    const char *delimiters = " \t\n\r.,;:!?()[]{}<>|/";
 
-    // Process each line
+    // Processar entrada linha a linha
     while (fgets(buffer, sizeof(buffer), stdin) != NULL) {
         buffer[strcspn(buffer, "\n")] = '\0'; // Remove newline
         
-        if (strlen(buffer) == 0) continue; // Skip empty lines
+        // Salta linhas vazias
+        if (strlen(buffer) == 0) continue;
         
         char *token = strtok(buffer, delimiters);
         while (token != NULL) {
+            // Ignorar strings vazias
             if (strlen(token) == 0) {
                 token = strtok(NULL, delimiters);
                 continue;
             }
 
-            // Normalize to lowercase
-            for (char *p = token; *p; p++) *p = tolower(*p);
-
-            // Check if the word exists in the vector
+            // Procura palavra no vetor
             bool found = false;
             for (size_t i = 0; i < dynvec_length(words); i++) {
                 WordCount *wc = dynvec_get(words, i);
@@ -346,11 +281,17 @@ int main(void) {
                 }
             }
 
-            // Add new word if not found
+            // Adicionar nova palavra se não foi encontrada
             if (!found) {
-                WordCount new_wc = {.word = strdup(token), .count = 1};
+                WordCount new_wc = {
+                    .word = strdup(token),
+                    .count = 1
+                };
                 if (!new_wc.word) {
-                    perror("Erro de alocação");
+                    errno = ENOMEM;
+                    #ifdef DEBUG_ON
+                    perror("Create. Erro ao alocar memória para estrutura");
+                    #endif
                     dynvec_free(words);
                     return 1;
                 }
@@ -361,13 +302,14 @@ int main(void) {
         }
     }
 
-    // 1) Alphabetical sort (stable)
+    // 1) Ordenação alfabética
     insertion_sort_dynvec(words, compare_words_alpha);
 
-    // 2) Sort by descending count (with alphabetical tiebreaker)
+    // 2) Ordenação por contagem decrescente
+    //qsort(words->data, words->length, sizeof(WordCount), compare_counts_desc);
     quicksort_dynvec(words, compare_counts_desc);
 
-    // Print top N results
+    // Impressão dos top N
     size_t limit = N < dynvec_length(words) ? N : dynvec_length(words);
     for (size_t i = 0; i < limit; i++) {
         WordCount *wc = dynvec_get(words, i);
@@ -375,7 +317,7 @@ int main(void) {
         free(wc->word);
     }
 
-    // Free remaining words
+    // Liberar memória das palavras restantes (se N > limit)
     for (size_t i = limit; i < dynvec_length(words); i++) {
         WordCount *wc = dynvec_get(words, i);
         free(wc->word);
@@ -384,3 +326,4 @@ int main(void) {
     dynvec_free(words);
     return 0;
 }
+//
