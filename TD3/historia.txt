@@ -1,0 +1,18 @@
+1|A entrada da Floresta das Sombras ergue-se diante de ti, com árvores gigantescas e o voo de corvos negros. Um velho guardião oferece um cajado brilhante.|Aceitar o cajado do guardião|2|Ignorar o guardião e entrar sem equipamento|3
+2|Com o cajado em punho, sentes uma vibração mágica. Do nada, um lobo sombrio avança, uivando.|Usar o cajado para afastar o lobo|4|Fugir em direção a um trilho estreito|5
+3|Entras à toa na floresta e o chão cede sob teus pés, caindo numa câmara subterrânea iluminada por runas vermelhas.|Investigar as runas|6|Tentar escalar e sair pela fenda|7
+4|O lobo recua, deixando um pergaminho semi-queimado no solo. No pergaminho está um mapa do interior da floresta, marcado com um “X”.|Seguir o mapa|8|Deixar o mapa e explorar por conta própria|9
+5|Durante a fuga, tropeças num galho e partes a perna. Encontras uma clareira com uma fonte de água cristalina.|Beber água da fonte|10|Ignorar e arrastar-te para a frente|11
+6|As runas brilham mais forte e o chão treme: uma porta secreta se abre para uma galeria de espelhos mágicos.|Entrar na galeria|12|Sair correndo pela câmara|7
+7|Conseguindo sair, avistas duas passagens: uma ladeada por estátuas antigas, outra tomada por névoa verde.|Seguir pela passagem das estátuas|13|Seguir pela névoa verde|14
+8|O mapa leva-te a um poço ancestral. No fundo, vês o reflexo de algo brilhante.|Descer pelo poço|15|Contornar o poço e procurar outra rota|16
+9|Sem rumo, deparas-te com um grupo de druidas em círculo. Parecem preparar um ritual.|Aproximar-se para ouvir|17|Prenderes na sombra e observar de longe|18
+10|A água cura tua perna… mas começa a borbulhar e forma-se um monstro de água que bloqueia a passagem!|Usar o cajado para conter o monstro|19|Saltar por cima do monstro|11
+11|Avanças apesar da dor e encontras uma cabana abandonada com um baú trancado.|Arrombar o baú|20|Inspecionar a cabana primeiro|21
+12|Cada espelho reflete uma versão diferente de ti — num deles, vês o artefacto brilhando.|Tocar nesse espelho|22|Ignorar os espelhos e seguir adiante|7
+13|As estátuas ganham vida e bloqueiam teu caminho.|Combater|23|Recitar uma oração pedida nas runas|24
+14|A névoa te envolve, e uma voz sussurra promessas de poder em troca da tua alma.|Aceitar a voz|25|Rejeitar e tentar dissipar a névoa|26
+15|Ao chegar ao fundo do poço, encontras o Artefacto das Sombras — um amuleto negro pulsante.|Agarrar o amuleto|27|Estudar primeiro a sua ligação mágica|28
+16|A rota alternativa leva-te a ruínas de um templo; no altar, alguém derramou sangue fresco.|Seguir as pegadas|29|Subir até o telhado do templo para observar melhor|30
+17|Os druidas notam a tua presença e convidam-te para o círculo; falam de uma profecia que precisas cumprir.|Aceitar participar|31|Furtar o círculo e roubar um símbolo|32
+18|Observando escondido, percebes que são hostis a intrusos. Um deles procura-te com uma lança cerimonial.|Fugir silenciosamente|33|Contra-atacar antes que te encontrem|23
