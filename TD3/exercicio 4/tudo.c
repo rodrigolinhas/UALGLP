@@ -2,7 +2,29 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "Cena.h"
+
+#define MAXTXT 4096
+#define MAXCHOICE 10
+
+typedef enum {NORMAL, WON, FAILED} TipoCena;
+
+typedef struct Cena {
+    char *descritivo;
+    TipoCena tipo;
+    int nopcoes;
+    char **vopcoes;
+} Cena;
+
+typedef struct No {
+    Cena *cena;
+    struct No **vizinhos;
+    int nvizinhos;
+} No;
+
+typedef struct historia {
+    No *cena_inicial;
+    No *cena_ativa;
+} historia;
 
 Cena *criaCena(const char *descritivo, TipoCena tipo, int nopcoes, char **vopcoes) {
     if ((tipo == NORMAL && nopcoes <= 0) || (tipo != NORMAL && nopcoes != 0)) {
@@ -212,49 +234,55 @@ No **lerCenasDoInput(int *n) {
     return nos;
 }
 
-// Add this function to parse IDs from a string
+// Parse IDs from a line of text
 int* parseIds(const char *line, int *count) {
     int capacity = 10;
     int *ids = malloc(capacity * sizeof(int));
     *count = 0;
-    char *token = strtok((char*)line, " ");
+    char *temp = strdup(line);
+    char *token = strtok(temp, " \t\n");
     while (token) {
         if (*count >= capacity) {
             capacity *= 2;
             ids = realloc(ids, capacity * sizeof(int));
         }
         ids[(*count)++] = atoi(token);
-        token = strtok(NULL, " ");
+        token = strtok(NULL, " \t\n");
     }
+    free(temp);
     return ids;
 }
 
-
+// Constrói os vizinhos lendo uma linha por cena NORMAL
 void construirGrafo(No **nos, int n) {
-    char idLine[MAXTXT];
-    fgets(idLine, sizeof idLine, stdin);
-    
-    int count; // Declare 'count' here
-    int *ids = parseIds(idLine, &count); // Implement parseIds
-    int idx = 0;
-    
+    char line[MAXTXT];
     for (int i = 0; i < n; i++) {
         No *no = nos[i];
         if (no->cena->tipo == NORMAL) {
-            for (int j = 0; j < no->nvizinhos; j++) {
-                int id = ids[idx++];
-                juntaVizinhoNo(no, j, nos[id]);
+            if (!fgets(line, sizeof line, stdin)) {
+                errno = EINVAL;
+                return;
             }
+            int count;
+            int *ids = parseIds(line, &count);
+            if (count != no->nvizinhos) {
+                free(ids);
+                errno = EINVAL;
+                return;
+            }
+            for (int j = 0; j < count; j++) {
+                juntaVizinhoNo(no, j, nos[ids[j]]);
+            }
+            free(ids);
         }
     }
-    free(ids);
 }
 
 void executarJogo(historia *h, int *choices, int numChoices) {
     int choiceIdx = 0;
     No *cur = h->cena_ativa;
     
-    while (choiceIdx < numChoices) {
+    while (choiceIdx < numChoices && cur != NULL) { // Adiciona verificação de cur != NULL
         mostraCenaNo(cur);
         TipoCena t = estadoCenaNo(cur);
         if (t != NORMAL) {
@@ -266,9 +294,18 @@ void executarJogo(historia *h, int *choices, int numChoices) {
             printf("STANDBY!\n");
             return;
         }
-        cur = proximoNo(cur, esc);
+        No *next = proximoNo(cur, esc); // Armazena o próximo nó
+        if (next == NULL) { // Verifica se é válido
+            printf("STANDBY!\n");
+            return;
+        }
+        cur = next; // Atualiza cur apenas se next for válido
     }
-    printf("STANDBY!\n");
+    if (cur == NULL) {
+        printf("STANDBY!\n");
+    } else {
+        printf("STANDBY!\n");
+    }
 }
 
 void libertarTudo(No **nos, int n, historia *h) {
@@ -279,4 +316,28 @@ void libertarTudo(No **nos, int n, historia *h) {
     }
     free(nos);
     free(h);
+}
+
+int main(void) {
+    int n;
+    No **nos = lerCenasDoInput(&n);
+    if (!nos) { fprintf(stderr, "Erro ao ler input\n"); return EXIT_FAILURE; }
+    construirGrafo(nos, n);
+    historia *h = criaHistoria(nos[0]);
+    if (!h) { fprintf(stderr, "Erro ao iniciar historia\n"); return EXIT_FAILURE; }
+
+    int choices[MAXCHOICE];
+    int numChoices = 0;
+    char buf[MAXTXT];
+    if (fgets(buf, sizeof buf, stdin)) {
+        char *token = strtok(buf, " \t\n");
+        while (token && numChoices < MAXCHOICE) {
+            choices[numChoices++] = atoi(token);
+            token = strtok(NULL, " \t\n");
+        }
+    }
+
+    executarJogo(h, choices, numChoices);
+    libertarTudo(nos, n, h);
+    return 0;
 }

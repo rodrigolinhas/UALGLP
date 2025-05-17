@@ -42,7 +42,7 @@ int         escolheCenaNo(const No *no);
 historia    *criaHistoria(No *no);
 No          **lerCenasDoInput(int *n);
 void        construirGrafo(No **nos, int n);
-void        executarJogo(historia *h);
+void        executarJogo(historia *h, int *choices, int numChoices);
 void        libertarTudo(No **nos, int n, historia *h);
 
 #endif
