@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "Cena.h"
 
 Cena *criaCena(const char *descritivo, TipoCena tipo, int nopcoes, char **vopcoes) {
     if ((tipo == NORMAL && nopcoes <= 0) || (tipo != NORMAL && nopcoes != 0)) {

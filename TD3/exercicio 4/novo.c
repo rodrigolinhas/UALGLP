@@ -2,7 +2,42 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 //REVER
+//Assuma que o tamanho máximo de um texto é definido via uma macro MAXTXT com o valor 4096
+#define MAXTXT 4096
+//Assuma que o número máximo de escolhas é definido via uma macro MAXCHOICE com o valor 10
+#define MAXCHOICE 10
+
+typedef enum {NORMAL, WON, FAILED} TipoCena;
+
+typedef struct Cena {
+    char *descritivo;
+    TipoCena tipo;
+    int nopcoes;
+    char **vopcoes;
+} Cena;
+
+
+typedef struct no {
+    Cena *cena;             // Apontador para a cena
+    struct no **vizinhos;   // Vetor de apontadores para vizinhos
+    int nvizinhos;          // Número de vizinhos
+} No;
+
+/*
+Considere o tipo estrutural historia que tem dois campos. O primeiro campo é um
+apontador para o nó que arquiva a cena inicial da história. O segundo campo é um
+apontador para o nó que contem a cena atualmente ativa da história a decorrer.
+Define o tipo historia 
+*/
+typedef struct historia {
+    No *cena_inicial;  // Apontador para a cena inicial
+    No *cena_ativa;    // Apontador para a cena atualmente ativa
+    int  n_cenas;      // Número total de cenas
+    Cena **cenas;      // Apontador para o vetor de cenas
+    No   **nos;        // Apontador para o vetor de nós
+} historia;
 /*
 que aloca dinamicamente uma Cena com malloc , preencha os seus campos
 textuais com recurso à função strcpy e a partir dos parâmetros passados
@@ -273,4 +308,159 @@ int escolheCenaNo(No *no){
     }
 
     return escolha; // Retorna a escolha válida do usuário
+}
+
+// Função auxiliar: lê bloco descritivo até ">>>", retornando parte após ">>>" se existir
+static char *leBloco(FILE *in, char *buffer) {
+    char line[512];
+    buffer[0] = '\0';
+    while (fgets(line, sizeof line, in)) {
+        char *p = strstr(line, ">>>");
+        if (p) {
+            // tudo antes de >>> é descritivo
+            *p = '\0';
+            strncat(buffer, line, MAXTXT - strlen(buffer) - 1);
+            p += 3;
+            // pula espaços
+            while (*p == ' ' || *p == '\t') p++;
+            if (*p == '<') {
+                // retorna tipo+opções numa string alocada
+                return strdup(p);
+            }
+            return NULL; // tipo será lido separadamente
+        }
+        strncat(buffer, line, MAXTXT - strlen(buffer) - 1);
+    }
+    return NULL;
+}
+
+// Cria toda a história lendo da stdin
+historia *criaHistoria(void) {
+    int n;
+    if (scanf("%d\n", &n) != 1 || n <= 0) {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    Cena *cenas_arr[n];
+    No   *nos_arr[n];
+    int   targets[n][MAXCHOICE];
+    char *vtxt[n][MAXCHOICE];
+    char  *typeLine;
+    char   descript[MAXTXT];
+
+    for (int i = 0; i < n; i++) {
+        // lê índice [i]
+        char tmp[64];
+        if (!fgets(tmp, sizeof tmp, stdin) || !strchr(tmp, '[')) {
+            errno = EINVAL;
+            return NULL;
+        }
+        // lê <<< e bloco até >>>, capturando tipoLine se após >>>
+        typeLine = leBloco(stdin, descript);
+        if (!typeLine) {
+            // tipo e opções não na mesma linha
+            typeLine = malloc(64);
+            if (!fgets(typeLine, 64, stdin)) {
+                free(typeLine);
+                errno = EINVAL;
+                return NULL;
+            }
+        }
+        // parse tipo/num opções
+        TipoCena tipo;
+        int nopc = 0;
+        if (strstr(typeLine, "WON")) tipo = WON;
+        else if (strstr(typeLine, "FAILED")) tipo = FAILED;
+        else if (sscanf(typeLine, "<%d>", &nopc) == 1) tipo = NORMAL;
+        else {
+            free(typeLine);
+            errno = EINVAL;
+            return NULL;
+        }
+        free(typeLine);
+        
+        // se NORMAL, lê opções
+        if (tipo == NORMAL) {
+            fgets(tmp, sizeof tmp, stdin); // "***"
+            for (int j = 0; j < nopc; j++) {
+                char line[512];
+                fgets(line, sizeof line, stdin);
+                int tgt;
+                if (sscanf(line + 2, "%d.", &tgt) != 1) {
+                    errno = EINVAL;
+                    return NULL;
+                }
+                targets[i][j] = tgt;
+                vtxt[i][j] = strdup(line + 2);
+            }
+            fgets(tmp, sizeof tmp, stdin); // "***"
+        }
+        // cria cena e nó
+        cenas_arr[i] = criaCena(descript, tipo, nopc,
+                                 (tipo == NORMAL) ? vtxt[i] : NULL);
+        nos_arr[i]   = criaNo(cenas_arr[i], nopc);
+        if (!cenas_arr[i] || !nos_arr[i]) {
+            perror("Erro a criar cena/nó");
+            return NULL;
+        }
+    }
+    // Liga vizinhos
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < nos_arr[i]->nvizinhos; j++) {
+            juntaVizinhoNo(nos_arr[i], j, nos_arr[ targets[i][j] ]);
+        }
+    }
+    historia *H = malloc(sizeof *H);
+    H->cena_inicial = nos_arr[0];
+    H->cena_ativa   = nos_arr[0];
+    H->n_cenas      = n;
+    H->cenas        = malloc(n * sizeof(Cena*));
+    H->nos          = malloc(n * sizeof(No*));
+    memcpy(H->cenas, cenas_arr, n * sizeof(Cena*));
+    memcpy(H->nos,   nos_arr,   n * sizeof(No*));
+    return H;
+}
+
+int main(void) {
+    historia *H = criaHistoria();
+    if (!H) {
+        perror("criaHistoria");
+        return 1;
+    }
+    No *atual = H->cena_ativa;
+    while (estadoCenaNo(atual) == NORMAL) {
+        int escolha_id;
+        if (scanf("%d", &escolha_id) != 1) {
+            printf("WAITING\n");
+            goto cleanup;
+        }
+        int idx = -1;
+        for (int i = 0; i < atual->nvizinhos; i++) {
+            int tgt;
+            if (sscanf(atual->cena->vopcoes[i], "%d.", &tgt) == 1
+                && tgt == escolha_id) {
+                idx = i; break;
+            }
+        }
+        if (idx < 0) {
+            printf("WAITING\n");
+            goto cleanup;
+        }
+        atual = proximoNo(atual, idx);
+    }
+    if (estadoCenaNo(atual) == WON)   printf("WON\n");
+    else                               printf("FAILED\n");
+
+cleanup:
+    // Liberta memória
+    for (int i = 0; i < H->n_cenas; i++) libertaCena(H->cenas[i]);
+    for (int i = 0; i < H->n_cenas; i++) {
+        free(H->nos[i]->vizinhos);
+        free(H->nos[i]);
+    }
+    free(H->cenas);
+    free(H->nos);
+    free(H);
+    return 0;
 }
